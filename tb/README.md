@@ -1,4 +1,4 @@
-Debug Unit plus RI5CY Testbench
+Debug Unit Simulation with Verilator
 =====================
 
 Running the testbench with [verilator](https://www.veripool.org/wiki/verilator)
