@@ -144,12 +144,12 @@ RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(RTLSRC_TB_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 # riscv bare metal cross compiling
-RISCV			?= $(HOME)/.riscv
-RV_CC			= $(RISCV)/bin/riscv32-unknown-elf-gcc
+RISCV			?= $(HOME)/.local
+RV_CC			= $(HOME)/.local/bin/riscv32-unknown-elf-gcc
 RV_CFLAGS		= -march=rv32imc -Os -g
 RV_LDFLAGS		= -nostdlib -static -T prog/link.ld
 RV_LDLIBS		= -lc -lm -lgcc
-RV_OBJCOPY		= $(RISCV)/bin/riscv32-unknown-elf-objcopy
+RV_OBJCOPY		= $(HOME)/.local/bin/riscv32-unknown-elf-objcopy
 
 # assume verilator if no target chosen
 .DEFAULT_GOAL := veri-run
@@ -206,11 +206,11 @@ verilate: testbench_verilator
 # directory
 testbench_verilator: $(RTLSRC_VERI_TB) $(RTLSRC_PKG) $(RTLSRC) \
 			remote_bitbang/librbs_veri.so
-	$(VERILATOR) --cc --sv --exe $(VERI_TRACE) \
-		--Wno-lint --Wno-UNOPTFLAT --Wno-BLKANDNBLK --Wno-COMBDLY \
+	$(VERILATOR) --cc --sv --exe $(VERI_TRACE) --no-timing --trace\
+		--Wno-lint --Wno-UNOPTFLAT --Wno-BLKANDNBLK --Wno-COMBDLY --Wno-STMTDLY\
 		--Wno-MODDUP $(addprefix +incdir+,$(RTLSRC_INCDIR)) --top-module \
 		tb_top_verilator --Mdir $(VERI_DIR) \
-		-CFLAGS "-std=gnu++11 $(VERI_CFLAGS)" $(VERI_COMPILE_FLAGS) \
+		-CFLAGS "-std=gnu++17 $(VERI_CFLAGS)" $(VERI_COMPILE_FLAGS) \
 		$(RTLSRC_PKG) $(RTLSRC_VERI_TB) $(RTLSRC) \
 		-LDFLAGS "-L../remote_bitbang \
 		-Wl,--enable-new-dtags -Wl,-rpath,remote_bitbang -lrbs_veri" \
@@ -301,10 +301,11 @@ prog-clean:
 
 # run program
 .PHONY: veri-run
-veri-run: verilate prog/test.hex
-	./testbench_verilator $(VERI_FLAGS) \
-		"+firmware=prog/test.hex"
-
+veri-run: verilate prog/test.elf
+	./testbench_verilator $(VERI_FLAGS) 
+# veri-run: verilate prog/test.hex
+# 	./testbench_verilator $(VERI_FLAGS) \
+# 		"+firmware=prog/test.hex"
 # run openocd testbench
 # Use OPENOCD to point to openocd binary
 # Use OPENOCD_SCRIPT to point to test script

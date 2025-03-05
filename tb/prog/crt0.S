@@ -28,21 +28,21 @@ _start:
 /* set vector table address */
 	la a0, __vector_start
 	csrw mtvec, a0
-/* set vector table address for CLINTx */
-	la a0, __vector_x_start
-	csrw 0x307, a0
+# /* set vector table address for CLINTx */
+# 	la a0, __vector_x_start
+# 	csrw 0x307, a0
 
-/* clear the bss segment */
-	la a0, __bss_start
-	la a2, __bss_end
-	sub a2, a2, a0
-	li a1, 0
-	call memset
+# /* clear the bss segment */
+# 	la a0, __bss_start
+# 	la a2, __bss_end
+# 	sub a2, a2, a0
+# 	li a1, 0
+# 	call memset
 
-/* new-style constructors and destructors */
-	la a0, __libc_fini_array
-	call atexit
-	call __libc_init_array
+# /* new-style constructors and destructors */
+# 	la a0, __libc_fini_array
+# 	call atexit
+# 	call __libc_init_array
 
 /* call main */
 	lw a0, 0(sp)                    /* a0 = argc */
