@@ -1,16 +1,23 @@
 import DM::*;
-module tb_top_verilator #(
+
+module soc_top #(
     parameter int unsigned INSTR_RDATA_WIDTH = 32,
-    parameter int unsigned RAM_ADDR_WIDTH = 22,
+    parameter int unsigned RAM_ADDR_WIDTH = 16,
     parameter logic [31:0] BOOT_ADDR = 32'h1A00_0180,
-    parameter bit JTAG_BOOT = 1,
-    parameter int unsigned OPENOCD_PORT = 9999
+    parameter bit JTAG_BOOT = 1
 ) (
     input  logic clk_i,
     input  logic rst_ni,
     input  logic fetch_enable_i,
     output logic tests_passed_o,
-    output logic tests_failed_o
+    output logic tests_failed_o,
+
+    // JTAG interface from board
+    input  logic tck_i,
+    input  logic tms_i,
+    input  logic tdi_i,
+    input  logic trst_ni,
+    output logic tdo_o
 );
 
     // Hart configuration
@@ -29,11 +36,6 @@ module tb_top_verilator #(
     logic [31:0] data_addr, data_rdata, data_wdata;
     logic data_we;
     logic [3:0] data_be;
-
-    // JTAG interface
-    logic sim_jtag_tck, sim_jtag_tms, sim_jtag_tdi, sim_jtag_trstn, sim_jtag_tdo;
-    logic [31:0] sim_jtag_exit;
-    logic sim_jtag_enable = JTAG_BOOT;
 
     // Debug module connections
     logic debug_req_ready, jtag_req_valid, jtag_resp_ready, jtag_resp_valid;
@@ -57,7 +59,10 @@ module tb_top_verilator #(
     logic [0:4] irq_id_in, irq_id_out;
     logic irq_ack;
 
-    // Instantiate CV32E40P core
+    // Reset synchronizer (simple logic)
+    assign ndmreset_n = rst_ni & ~ndmreset;
+
+    // Core instantiation
     cv32e40p_core #(
         .PULP_XPULP(0), .PULP_CLUSTER(0), .FPU(0), .PULP_ZFINX(0), .NUM_MHPMCOUNTERS(1)
     ) riscv_core_i (
@@ -91,7 +96,7 @@ module tb_top_verilator #(
         .core_sleep_o()
     );
 
-    // RAM and peripheral subsystem
+    // RAM and peripherals
     mm_ram #(
         .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
         .INSTR_RDATA_WIDTH(INSTR_RDATA_WIDTH),
@@ -136,53 +141,33 @@ module tb_top_verilator #(
         .tests_failed_o(tests_failed_o)
     );
 
-    // JTAG DTM (replaces original dmi_jtag)
-    // DTM_top #(
-    //     .IdcodeValue          ( 32'h249511C3    )
-    // ) dtm (
-    //     .tck_i(sim_jtag_tck),
-    //     .tms_i(sim_jtag_tms),
-    //     .td_i(sim_jtag_tdi),
-    //     .trst_ni(sim_jtag_trstn),
-    //     .td_o(sim_jtag_tdo),
-    //     .tdo_oe_o(),
-    //     .clk(clk_i),
-    //     .rst_ni(rst_ni),
-    //     .dbg_dmi_clear_o(),
-    //     .dbg_dmi_req_o(jtag_dmi_req),
-    //     .dbg_dmi_req_valid_o(jtag_req_valid),
-    //     .dbg_dmi_req_ready_i(debug_req_ready),
-    //     .dbg_dmi_resp_i(debug_resp),
-    //     .dbg_dmi_resp_ready_o(jtag_resp_ready),
-    //     .dbg_dmi_resp_valid_i(jtag_resp_valid)
-    // );
-
+    // DMI from JTAG TAP
     DTM_top #(
-        .IdcodeValue          ( 32'h249511C3    )
+        .IdcodeValue(32'h249511C3)
     ) i_dmi_jtag (
-        .clk_i                ( clk_i           ),
-        .rst_ni               ( rst_ni          ),
-        .testmode_i           ( 1'b0            ),
-        .dmi_req_o            ( jtag_dmi_req    ),
-        .dmi_req_valid_o      ( jtag_req_valid  ),
-        .dmi_req_ready_i      ( debug_req_ready ),
-        .dmi_resp_i           ( debug_resp      ),
-        .dmi_resp_ready_o     ( jtag_resp_ready ),
-        .dmi_resp_valid_i     ( jtag_resp_valid ),
-        .dmi_rst_no           (                 ), // not connected
-        .tck_i                ( sim_jtag_tck    ),
-        .tms_i                ( sim_jtag_tms    ),
-        .trst_ni              ( sim_jtag_trstn  ),
-        .td_i                 ( sim_jtag_tdi    ),
-        .td_o                 ( sim_jtag_tdo    ),
-        .tdo_oe_o             (                 )
+        .clk_i(clk_i),
+        .rst_ni(rst_ni),
+        .testmode_i(1'b0),
+        .dmi_req_o(jtag_dmi_req),
+        .dmi_req_valid_o(jtag_req_valid),
+        .dmi_req_ready_i(debug_req_ready),
+        .dmi_resp_i(debug_resp),
+        .dmi_resp_ready_o(jtag_resp_ready),
+        .dmi_resp_valid_i(jtag_resp_valid),
+        .dmi_rst_no(), // not used
+        .tck_i(tck_i),
+        .tms_i(tms_i),
+        .trst_ni(trst_ni),
+        .td_i(tdi_i),
+        .td_o(tdo_o),
+        .tdo_oe_o() // not used
     );
 
-    // Debug Module (replaces original dm_top)
+    // Debug Module
     DM_top #(
-       .NrHarts           ( NrHarts           ),
-       .BusWidth          ( 32                ),
-       .SelectableHarts   ( 1'b1  )
+        .NrHarts(NrHarts),
+        .BusWidth(32),
+        .SelectableHarts(1'b1)
     ) dm (
         .clk_i(clk_i),
         .rst_ni(rst_ni),
@@ -219,42 +204,10 @@ module tb_top_verilator #(
         .dmi_resp_o(debug_resp)
     );
 
-    // Slave access grant and response logic
+    // Slave response logic
     assign dm_grant = dm_req;
     always_ff @(posedge clk_i or negedge rst_ni)
-        if (~rst_ni) dm_rvalid <= 1'b0;
+        if (!rst_ni) dm_rvalid <= 1'b0;
         else dm_rvalid <= dm_grant;
-
-    // Reset synchronizer with ndmreset support
-    rstgen rstgen_main (
-        .clk_i(clk_i),
-        .rst_ni(rst_ni & ~ndmreset),
-        .test_mode_i(1'b0),
-        .rst_no(ndmreset_n),
-        .init_no()
-    );
-
-    // Simulated JTAG DPI module
-    SimJTAG #(
-        .TICK_DELAY(1),
-        .PORT(OPENOCD_PORT)
-    ) sim_jtag (
-        .clock(clk_i),
-        .reset(~rst_ni),
-        .enable(sim_jtag_enable),
-        .init_done(rst_ni),
-        .jtag_TCK(sim_jtag_tck),
-        .jtag_TMS(sim_jtag_tms),
-        .jtag_TDI(sim_jtag_tdi),
-        .jtag_TRSTn(sim_jtag_trstn),
-        .jtag_TDO_data(sim_jtag_tdo),
-        .jtag_TDO_driven(1'b1),
-        .exit(sim_jtag_exit)
-    );
-
-    // Exit simulation if OpenOCD requests it
-    always_comb begin
-        if (sim_jtag_exit) $finish(2);
-    end
 
 endmodule

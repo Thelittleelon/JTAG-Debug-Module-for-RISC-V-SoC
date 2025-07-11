@@ -1,29 +1,6 @@
-/* Copyright 2018 ETH Zurich and University of Bologna.
- * Copyright and related rights are licensed under the Solderpad Hardware
- * License, Version 0.51 (the “License”); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
- * or agreed to in writing, software, hardware and materials distributed under
- * this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
- * CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- *
- * File:   dmi_jtag_tap.sv
- * Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
- * Date:   19.7.2018
- *
- * Description: JTAG TAP for DMI (according to debug spec 0.13)
- *
- */
-
 module dmi_jtag_tap #(
   parameter int unsigned IrLength = 5,
-  // JTAG IDCODE Value
   parameter logic [31:0] IdcodeValue = 32'h00000001
-  // xxxx             version
-  // xxxxxxxxxxxxxxxx part number
-  // xxxxxxxxxxx      manufacturer id
-  // 1                required by standard
 ) (
   input  logic        tck_i,    // JTAG test clock pad
   input  logic        tms_i,    // JTAG test mode select pad

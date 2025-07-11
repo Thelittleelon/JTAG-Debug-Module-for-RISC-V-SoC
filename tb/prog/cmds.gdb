@@ -8,7 +8,7 @@ file test.elf
  set logging enabled on
 
 # set gdb to show packets and serial data
-set debug remote 1
+#set debug remote 1
 #set debug serial 1
 
 set remotetimeout 20
@@ -16,6 +16,7 @@ set remotetimeout 20
 target extended-remote localhost:3333
 monitor reset halt
 load
+
 break main
 c
 step

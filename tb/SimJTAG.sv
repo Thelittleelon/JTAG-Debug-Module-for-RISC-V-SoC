@@ -11,6 +11,8 @@ import "DPI-C" function int jtag_tick
  input bit  jtag_TDO
 );
 
+//import "DPI-C" function int read_byte(input svBitVecVal addr[]);
+
 module SimJTAG #(
                  parameter TICK_DELAY = 50,
                  parameter PORT = 0

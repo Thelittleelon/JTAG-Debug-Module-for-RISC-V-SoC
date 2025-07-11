@@ -51,7 +51,7 @@ SIMV_FLAGS		=
 
 # verilator configuration
 VERILATOR		= verilator
-VERI_FLAGS		=
+VERI_FLAGS		= +vcd
 VERI_COMPILE_FLAGS	=
 VERI_TRACE		=
 VERI_DIR		= cobj_dir
@@ -82,7 +82,8 @@ RTLSRC_FPNEW_PKG	:= fpnew/src/fpnew_pkg.sv
 RTLSRC_RISCV_PKG	+= $(addprefix riscv/rtl/include/,\
 				cv32e40p_apu_core_pkg.sv cv32e40p_pkg.sv \
 				../../bhv/include/cv32e40p_tracer_pkg.sv)
-RTLSRC_DM_PKG		+= ../src/dm_pkg.sv
+#RTLSRC_DM_PKG		+= ../src/dm_pkg.sv
+RTLSRC_DM_PKG		+= ../rtl/DM_Pkg.sv
 
 RTLSRC_COMMON_PKG	:= common_cells/src/cdc_reset_ctrlr_pkg.sv
 
@@ -124,10 +125,58 @@ RTLSRC_COMMON		:= $(addprefix common_cells/src/,\
 RTLSRC_TECH		:= $(addprefix tech_cells_generic/src/,\
 				rtl/tc_clk.sv)
 RTLSRC_DEBUG		:= ../debug_rom/debug_rom.sv
-RTLSRC_DEBUG		+= $(addprefix ../src/,\
-				dm_csrs.sv dmi_cdc.sv dmi_jtag.sv \
-				dmi_jtag_tap.sv dm_mem.sv \
-				dm_sba.sv dm_top.sv dm_obi_top.sv)
+RTLSRC_DEBUG		+= ../debug_rom/debug_rom_one_scratch.sv
+# RTLSRC_DEBUG		+= $(addprefix ../src/,\
+# 				dm_csrs.sv dmi_cdc.sv dmi_jtag.sv \
+# 				dmi_jtag_tap.sv dm_mem.sv \
+# 				dm_sba.sv dm_top.sv dm_obi_top.sv)
+
+# RTLSRC_DEBUG += $(addprefix ../new_src/, \
+# 	AbstractCmd_Decoder.sv \
+# 	AbstractCmd_ROM.sv \
+# 	DM_ControlUnit.sv \
+# 	DM_ControlUnit1.sv \
+# 	DM_ControlUnit2.sv \
+# 	DM_ControlUnit3.sv \
+# 	DM_CSRS.sv \
+# 	DM_Datapath.sv \
+# 	DM_Mem.sv \
+# 	DM_Pkg.sv \
+# 	DM_ROM.sv \
+# 	DM_top.sv \
+# 	DMI_Decoder.sv \
+# 	DMI_Resp_FIFO.sv \
+# 	dm_sba_control.sv \
+# 	dm_sba_registers.sv \
+# 	cdc_stage_req.sv \
+# 	cdc_stage_resp.sv \
+# 	DTM_CDC.sv \
+# 	DTM_JTAG_TAP.sv \
+# 	DTM_Registers.sv \
+# 	DTM_top.sv\
+# 	dmi_jtag_tap.sv\
+# 	dmi_jtag.sv\
+# 	dmi_cdc.sv)
+
+RTLSRC_DEBUG += $(addprefix ../rtl/, \
+	AbstractCmd_Decoder.sv \
+	AbstractCmd_ROM.sv \
+	DM_ControlUnit.sv \
+	DM_ControlUnit1.sv \
+	DM_ControlUnit2.sv \
+	DM_ControlUnit3.sv \
+	DM_CSRS.sv \
+	DM_Datapath.sv \
+	DM_Mem.sv \
+	DM_ROM.sv \
+	DM_top.sv \
+	DMI_Decoder.sv \
+	DMI_Resp_FIFO.sv \
+	DTM_top.sv\
+	DTM_JTAG_TAP.sv\
+	DTM_CDC.sv\
+	DM_SBA.sv)
+
 
 RTLSRC			+= $(RTLSRC_RISCV) $(RTLSRC_COMMON) $(RTLSRC_TECH) $(RTLSRC_DEBUG)
 
