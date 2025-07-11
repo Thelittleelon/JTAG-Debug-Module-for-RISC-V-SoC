@@ -1,5 +1,3 @@
-# See LICENSE.SiFive for license details
-
 debug_rom = debug_rom.sv debug_rom_one_scratch.sv
 
 GCC?=riscv64-unknown-elf-gcc

@@ -1,5 +1,3 @@
-// Auto-generated code
-
 const int reset_vec_size = 40;
 
 uint32_t reset_vec[reset_vec_size] = {
@@ -43,4 +41,4 @@ uint32_t reset_vec[reset_vec_size] = {
     0x7b302573,
     0x7b202473,
     0x7b200073
-};
+};//

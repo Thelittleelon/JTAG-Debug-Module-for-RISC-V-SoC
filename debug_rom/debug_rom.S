@@ -1,5 +1,3 @@
-// See LICENSE.SiFive for license details.
-
 #include "encoding.h"
 
 // The debugger can assume as second scratch register.
